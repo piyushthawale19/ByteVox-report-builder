@@ -15,10 +15,11 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required.'),
 });
 
+const isProd = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  secure: isProd,
   maxAge: 60 * 60 * 1000, // 1 hour, matches JWT expiry
   path: '/',
 };
@@ -49,7 +50,12 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
 });
 
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie('token', { path: '/' });
+  res.clearCookie('token', {
+    path: '/',
+    httpOnly: true,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+    secure: isProd,
+  });
   res.json({ message: 'Logged out.' });
 });
 
