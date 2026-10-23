@@ -1,0 +1,6 @@
+Region,Product,Sales,Units,Order_Date
+North,Apples,120.50,15,2024-01-15
+South,Oranges,85.00,10,2024-01-16
+North,Bananas,45.25,,2024-01-17
+East,Apples,150.00,20,2024-01-18
+West,Grapes,210.00,25,2024-01-19
