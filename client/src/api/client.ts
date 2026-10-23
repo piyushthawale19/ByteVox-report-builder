@@ -100,10 +100,23 @@ export class ApiError extends Error {
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
+const TOKEN_KEY = 'bytevox_auth_token';
+
+export const authStorage = {
+  getToken: () => localStorage.getItem(TOKEN_KEY),
+  setToken: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  clearToken: () => localStorage.removeItem(TOKEN_KEY),
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  const token = authStorage.getToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const url = path.startsWith('http://') || path.startsWith('https://')
@@ -131,12 +144,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const api = {
   auth: {
     signup: (email: string, password: string) =>
-      request<{ user: User }>('/api/auth/signup', {
+      request<{ user: User; token?: string }>('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
     login: (email: string, password: string) =>
-      request<{ user: User }>('/api/auth/login', {
+      request<{ user: User; token?: string }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),

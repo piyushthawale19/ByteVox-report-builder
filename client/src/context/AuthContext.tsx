@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api, User } from '../api/client';
+import { api, User, authStorage } from '../api/client';
 import { Navigate, useLocation } from 'react-router-dom';
 
 interface AuthContextType {
@@ -21,8 +21,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await api.auth.me();
       setUser(data.user);
+      if (!data.user) {
+        authStorage.clearToken();
+      }
     } catch {
       setUser(null);
+      authStorage.clearToken();
     } finally {
       setLoading(false);
     }
@@ -34,17 +38,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, pass: string) => {
     const res = await api.auth.login(email, pass);
+    if (res.token) {
+      authStorage.setToken(res.token);
+    }
     setUser(res.user);
   };
 
   const signup = async (email: string, pass: string) => {
     const res = await api.auth.signup(email, pass);
+    if (res.token) {
+      authStorage.setToken(res.token);
+    }
     setUser(res.user);
   };
 
   const logout = async () => {
-    await api.auth.logout();
-    setUser(null);
+    try {
+      await api.auth.logout();
+    } finally {
+      authStorage.clearToken();
+      setUser(null);
+    }
   };
 
   return (

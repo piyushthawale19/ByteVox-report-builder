@@ -11,9 +11,12 @@ declare global {
   }
 }
 
-// Reads JWT from httpOnly cookie, verifies it, attaches userId to request
+// Reads JWT from Authorization header or httpOnly cookie, verifies it, attaches userId to request
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
-  const token = req.cookies?.token;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const token = req.cookies?.token || bearerToken;
+
   if (!token) {
     return next(new AppError(401, 'Authentication required. Please log in.'));
   }

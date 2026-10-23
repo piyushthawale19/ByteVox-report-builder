@@ -31,7 +31,7 @@ router.post('/signup', validate(signupSchema), async (req: Request, res: Respons
     const { token } = await loginUser(email, password);
 
     res.cookie('token', token, COOKIE_OPTIONS);
-    res.status(201).json({ user });
+    res.status(201).json({ user, token });
   } catch (err) {
     next(err);
   }
@@ -43,7 +43,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
     const { token, user } = await loginUser(email, password);
 
     res.cookie('token', token, COOKIE_OPTIONS);
-    res.json({ user });
+    res.json({ user, token });
   } catch (err) {
     next(err);
   }
@@ -60,7 +60,10 @@ router.post('/logout', (_req: Request, res: Response) => {
 });
 
 router.get('/me', (req: Request, res: Response) => {
-  const token = req.cookies?.token;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const token = req.cookies?.token || bearerToken;
+
   if (!token) {
     res.json({ user: null });
     return;
